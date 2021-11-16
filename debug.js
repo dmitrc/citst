@@ -1,15 +1,14 @@
 const { importOrGetEntries } = require('./forum');
-const { formatDate } = require('./utils');
+const { formatUtcDate } = require('./utils');
 
 async function init() {
-    const raw = await importOrGetEntries();
+    let items = await importOrGetEntries();
 
-    const items = raw
-        .filter(x => !!x.statusDate)
-        .sort((a, b) => b.statusDate - a.statusDate);
+    items = items.filter(x => !!x.statusDate)
+    items.sort((a, b) => new Date(b.statusDate) - new Date(a.statusDate));
 
     for (const i of items) {
-        console.log(`${i.name} (${formatDate(i.startDate)}) - ${i.status} (${formatDate(i.statusDate)})`);
+        console.log(`${i.name} (${formatUtcDate(i.startDate)}) - ${i.status} (${formatUtcDate(i.statusDate)})`);
     }
 }
 

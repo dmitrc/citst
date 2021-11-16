@@ -1,6 +1,6 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const fs = require('fs/promises');
-const { formatDate, log, error } = require('./utils');
+const { formatUtcDate, log, error } = require('./utils');
 
 const sheetId = '1U27V95kWlCVYWB0zye7DvqoXSkyqxgbA31eEJ_TKO6Y';
 const desiredLocations = ['vancouver'];
@@ -209,9 +209,9 @@ function formatDiffMessage(diff) {
     let msg = "Forum updates:";
     
     for (const item of diff) {
-        msg += `\n\n${item.name} (${formatDate(item.startDate)})`;
-        msg += `\nFrom: ${item.oldStatus} (${formatDate(item.oldStatusDate)})`;
-        msg += `\nTo: ${item.newStatus} (${formatDate(item.newStatusDate)})`;
+        msg += `\n\n${item.name} (${formatUtcDate(item.startDate)})`;
+        msg += `\nFrom: ${item.oldStatus} (${formatUtcDate(item.oldStatusDate)})`;
+        msg += `\nTo: ${item.newStatus} (${formatUtcDate(item.newStatusDate)})`;
     }
 
     return msg;

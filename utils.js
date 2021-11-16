@@ -11,6 +11,21 @@ function formatDate(date) {
     });
 }
 
+function formatUtcDate(date) {
+    if (!date) return null;
+
+    if (typeof date == 'string') {
+        date = new Date(date);
+    }
+    return date.toLocaleString('en-gb', {
+        day: 'numeric',
+        year: 'numeric',
+        month: 'short',
+        timeZone: 'UTC'
+    });
+}
+
+
 function time() {
     const now = new Date();
     return `[${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}]`;
@@ -26,6 +41,7 @@ function error(msg) {
 
 module.exports = {
     formatDate,
+    formatUtcDate,
     log,
     error
 };
