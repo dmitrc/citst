@@ -7,14 +7,14 @@ const { waitForSelector, getElementText } = require('./utils');
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
-const updateHours = [0, 9, 14, 19];
+const updateHours = [8, 20];
 let updateInterval = null;
 
 async function getStatus() {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
-  await page.setViewport({"width":1280,"height":720});
+  await page.setViewport({ width: 1280,height: 720 });
 
   const promises = [];
   promises.push(page.waitForNavigation());
@@ -36,30 +36,12 @@ async function getStatus() {
 
   result.lastUpdated = await getElementText(["dl > dd > time"], page);
   result.status = await getElementText(["div.mt-5 > p > strong"], page);
-
-  result.language = {};
-  result.language.status = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(1) > details > summary > div:nth-of-type(1)"], page);
-  result.language.description = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(1) > details > div"], page);
-
-  result.presence = {};
-  result.presence.status = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(2) > details > summary > div:nth-of-type(1)"], page);
-  result.presence.description = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(2) > details > div"], page);
-
-  result.test = {};
-  result.test.status = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(3) > details > summary > div:nth-of-type(1)"], page);
-  result.test.description = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(3) > details > div"], page);
-
-  result.background = {};
-  result.background.status = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(1) > details > summary > div:nth-of-type(1)"], page);
-  result.background.description = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(1) > details > div"], page);
-
-  result.prohibitions = {};
-  result.prohibitions.status = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(2) > details > summary > div:nth-of-type(1)"], page);
-  result.prohibitions.description = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(2) > details > div"], page);
-
-  result.oath = {};
-  result.oath.status = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(3) > details > summary > div:nth-of-type(1)"], page);
-  result.oath.description = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(3) > details > div"], page);
+  result.language = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(1) > details > summary > div:nth-of-type(1)"], page);
+  result.presence = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(2) > details > summary > div:nth-of-type(1)"], page);
+  result.test = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(3) > details > summary > div:nth-of-type(1)"], page);
+  result.background = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(1) > details > summary > div:nth-of-type(1)"], page);
+  result.prohibitions = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(2) > details > summary > div:nth-of-type(1)"], page);
+  result.oath = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(3) > details > summary > div:nth-of-type(1)"], page);
 
   await page.close();
   await browser.close();
@@ -67,13 +49,52 @@ async function getStatus() {
   return result;
 }
 
+function getNextStage(status) {
+  if (!status) {
+    return null;
+  }
+
+  if (status.background != "Completed") {
+    return {
+      name: "Background",
+      status: status.background
+    };
+  }
+  else if (status.test != "Completed") {
+    return {
+      name: "Test",
+      status: status.test
+    };
+  }
+  else if (status.presence != "Completed") {
+    return {
+      name: "DM",
+      status: status.presence
+    };
+  }
+  else if (status.oath != "Completed") {
+    return {
+      name: "Oath",
+      status: status.oath
+    };
+  }
+
+  return {
+    name: "N/A",
+    status: status.status
+  };
+}
+
 function formatStatusMessage(status) {
   if (!status) {
     return null;
   }
 
+  const nextStage = getNextStage(status);
+
   let msg = `Last updated: ${status.lastUpdated}\n`;
-  msg += `${status.oath.status}`;
+  msg += `Next step: ${nextStage.name}\n`;
+  msg += `Status: ${nextStage.status}`;
 
   return msg;
 }
