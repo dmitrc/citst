@@ -8,7 +8,6 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
 const updateHours = [8, 14, 20];
-let updateInterval = null;
 
 const CST_URL = "https://cst-ssc.apps.cic.gc.ca/en/login";
 const USERNAME_FIELD = "#uci-input";
@@ -134,7 +133,7 @@ function getNextStage(status) {
   }
 
   return {
-    name: "N/A",
+    name: "Finish",
     status: status.status
   };
 }
@@ -146,9 +145,8 @@ function formatStatusMessage(status) {
 
   const nextStage = getNextStage(status);
 
-  let msg = `Last updated: ${formatDate(status.lastUpdated)}\n`;
-  msg += `Next step: ${nextStage.name}\n`;
-  msg += `Status: ${nextStage.status}`;
+  let msg = `${nextStage.name}: ${nextStage.status}\n`
+  msg += `Last updated: ${formatDate(status.lastUpdated)}`;
 
   const now = new Date();
   for (const historyItem of status.history) {
@@ -172,13 +170,15 @@ async function doUpdate() {
 }
 
 function scheduleUpdate() {
-  updateInterval && clearInterval(updateInterval);
-  updateInterval = setInterval(async () => {
-    const hourNow = new Date().getHours();
-    if (updateHours.indexOf(hourNow) >= 0) {
-      await doUpdate();
-    }
-  }, 60 * 60 * 1000)
+  const timeToNearestHour = 60 - new Date().getMinutes();
+  setTimeout(() => {
+    setInterval(async () => {
+      const hourNow = new Date().getHours();
+      if (updateHours.indexOf(hourNow) >= 0) {
+        await doUpdate();
+      }
+    }, 1 * 60 * 60 * 1000);
+  }, timeToNearestHour);
 }
 
 bot.use(async (ctx, next) => {
