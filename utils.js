@@ -111,11 +111,24 @@ async function waitForFunction(fn) {
     throw new Error('Timed out');
 }
 
+async function getElementText(selector, frame) {
+    try {
+        const element = await waitForSelector(selector, frame);
+        const text = await frame.evaluate(el => el.textContent, element);
+        return text;
+    }
+    catch (err) {
+        console.error(err);
+        return null;
+    }
+}
+
 module.exports = {
     waitForSelectors,
     waitForSelector,
     waitForElement,
     querySelectorsAll,
     querySelectorAll,
-    waitForFunction
+    waitForFunction,
+    getElementText
 }
