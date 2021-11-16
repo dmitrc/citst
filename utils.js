@@ -1,4 +1,9 @@
 function formatDate(date) {
+    if (!date) return null;
+
+    if (typeof date == 'string') {
+        date = new Date(date);
+    }
     return date.toLocaleString('en-gb', {
         day: 'numeric',
         year: 'numeric',

@@ -164,6 +164,7 @@ async function importOrGetEntries(apiKey) {
             error(err);
         }
     }
+    return cachedEntries;
 }
 
 function getByName(container, name) {
