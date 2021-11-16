@@ -2,7 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 const { getStatus, formatStatusMessage } = require('./status');
-const { importOrGetEntries, getEntriesDiff, formatDiffMessage } = require('./sheets');
+const { importOrGetEntries, getEntriesDiff, formatDiffMessage } = require('./forum');
 const { log, error } = require('./utils');
 
 const { Telegraf } = require('telegraf');

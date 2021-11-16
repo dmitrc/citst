@@ -1,6 +1,6 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const fs = require('fs/promises');
-const { fomratDate, log, error } = require('./utils');
+const { formatDate, log, error } = require('./utils');
 
 const sheetId = '1U27V95kWlCVYWB0zye7DvqoXSkyqxgbA31eEJ_TKO6Y';
 const desiredLocations = ['vancouver'];
