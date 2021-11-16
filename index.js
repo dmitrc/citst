@@ -12,6 +12,7 @@ const statusUpdateHours = [8, 14, 20];
 const sheetsUpdateHours = [7, 9, 11, 13, 15, 17, 19, 21, 23];
 
 async function doStatusUpdate() {
+  if (!process.env.UCI || !process.env.PWD) return;
   try {
     const status = await getStatus(process.env.UCI, process.env.PWD);
     if (status) {
@@ -25,6 +26,7 @@ async function doStatusUpdate() {
 }
 
 async function doSheetsUpdate() {
+  if (!process.env.SHEETS_API_KEY) return;
   try {
     const diff = getEntriesDiff(process.env.SHEETS_API_KEY);
     if (diff && diff.length > 0) {

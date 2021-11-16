@@ -101,6 +101,7 @@ function rowToItem(row) {
 }
 
 async function getEntries(apiKey) {
+    if (!apiKey) return;
     log(`running forum entries update`);
 
     const doc = new GoogleSpreadsheet(sheetId);
@@ -128,6 +129,8 @@ async function getEntries(apiKey) {
 }
 
 async function exportEntries(items) {
+    if (!items || items.length == 0) return;
+
     cachedEntries = items;
     try {
         const jsonString = JSON.stringify(items);
@@ -224,7 +227,7 @@ function formatLatestMessage(items, limit = 99) {
     latestItems.sort((a, b) => new Date(b.statusDate) - new Date(a.statusDate));
 
     let msg = '';
-    
+
     const endIndex = Math.min(limit, latestItems.length);
     for (let i = 0; i < endIndex; ++i) {
         const x = latestItems[i];
