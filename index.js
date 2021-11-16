@@ -2,7 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 const { getStatus, formatStatusMessage } = require('./status');
-const { importOrGetEntries, getEntriesDiff, formatDiffMessage } = require('./forum');
+const { importOrGetEntries, getEntriesDiff, formatDiffMessage, formatLatestMessage } = require('./forum');
 const { log, error } = require('./utils');
 
 const { Telegraf } = require('telegraf');
@@ -60,6 +60,18 @@ function scheduleUpdate() {
   }, timeToNearestHour * 60 * 1000);
 }
 
+async function doLatest(ctx) {
+  try {
+    log(`getting latest items`);
+    const items = await importOrGetEntries(process.env.SHEETS_API_KEY);
+    const msg = formatLatestMessage(items, 10);
+    ctx.replyWithMarkdown(msg);
+  }
+  catch (err) {
+    error(err);
+  }
+}
+
 bot.use(async (ctx, next) => {
   const allowedUsers = [process.env.TELEGRAM_USERID];
   const id = ctx.chat.id.toString();
@@ -82,6 +94,7 @@ bot.start(ctx => {
 
 bot.command('get', doStatusUpdate);
 bot.command('diff', doSheetsUpdate);
+bot.command('latest', doLatest);
 
 async function init() {
   await bot.launch();

@@ -217,8 +217,26 @@ function formatDiffMessage(diff) {
     return msg;
 }
 
+function formatLatestMessage(items, limit = 99) {
+    if (!items) return null;
+
+    const latestItems = items.filter(x => !!x.statusDate)
+    latestItems.sort((a, b) => new Date(b.statusDate) - new Date(a.statusDate));
+
+    let msg = '';
+    
+    const endIndex = Math.min(limit, latestItems.length);
+    for (let i = 0; i < endIndex; ++i) {
+        const x = latestItems[i];
+        msg += `${x.name} (${formatUtcDate(x.startDate)}) - ${x.status} (${formatUtcDate(x.statusDate)})\n`;
+    }
+
+    return msg;
+}
+
 module.exports = {
     importOrGetEntries,
     getEntriesDiff,
-    formatDiffMessage
+    formatDiffMessage,
+    formatLatestMessage
 };
