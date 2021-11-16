@@ -1,56 +1,26 @@
-async function getSelectorText(selector, frame) {
-    try {
-        const element = await frame.waitForSelector(selector);
-        return getElementText(element, frame);
-    }
-    catch (err) {
-        console.error(err);
-        return null;
-    }
-}
-
-async function getElementText(element, frame) {
-    if (!frame || !element) {
-        return null;
-    }
-
-    return await frame.evaluate(el => el.textContent, element);
-}
-
-async function getSelectorTime(selector, frame) {
-    try {
-
-        const element = await frame.waitForSelector(selector);
-        return getElementTime(element, frame);
-    }
-    catch (err) {
-        console.error(err);
-        return null;
-    }
-}
-
-async function getElementTime(element, frame) {
-    if (!frame || !element) {
-        return null;
-    }
-
-    return await frame.evaluate(el => el.getAttribute('datetime'), element);
-}
-
 function formatDate(date) {
     return date.toLocaleString('en-gb', {
         day: 'numeric',
         year: 'numeric',
-        month: 'short',
-        hour: 'numeric',
-        minute: 'numeric'
+        month: 'short'
     });
 }
 
-module.exports = {
-    getSelectorText,
-    getElementText,
-    getSelectorTime,
-    getElementTime,
-    formatDate
+function time() {
+    const now = new Date();
+    return `[${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}]`;
 }
+
+function log(msg) {
+    console.log(`${time()} ${msg}`);
+}
+
+function error(msg) {
+    console.error(`${time()} ${msg}`);
+}
+
+module.exports = {
+    formatDate,
+    log,
+    error
+};
