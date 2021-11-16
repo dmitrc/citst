@@ -7,7 +7,7 @@ const { getSelectorText, getElementText, getSelectorTime, getElementTime, format
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
-const updateHours = [8, 20];
+const updateHours = [8, 14, 20];
 let updateInterval = null;
 
 const CST_URL = "https://cst-ssc.apps.cic.gc.ca/en/login";
