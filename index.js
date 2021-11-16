@@ -2,13 +2,37 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 const puppeteer = require('puppeteer');
-const { waitForSelector, getElementText } = require('./utils');
+const { getSelectorText, getElementText, getSelectorTime, getElementTime, formatDate } = require('./utils');
 
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
 const updateHours = [8, 20];
 let updateInterval = null;
+
+const CST_URL = "https://cst-ssc.apps.cic.gc.ca/en/login";
+const USERNAME_FIELD = "#uci-input";
+const PASSWORD_FIELD = "#password-input";
+const SUBMIT_BUTTON = "#sign-in-submit-btn";
+const LAST_UPDATED = "dl > dd > time";
+const APP_STATUS = "div.mt-5 > p > strong";
+
+function getPartialStatusSelector(col, row) {
+  return `ul.pl-0:nth-of-type(${col}) > li:nth-child(${row}) > details > summary > div:nth-of-type(1)`;
+}
+
+const LANG_STATUS = getPartialStatusSelector(1, 1);
+const PRESENCE_STATUS = getPartialStatusSelector(1, 2);
+const TEST_STATUS = getPartialStatusSelector(1, 3);
+const BG_STATUS = getPartialStatusSelector(2, 1);
+const PROHIBIT_STATUS = getPartialStatusSelector(2, 2);
+const OATH_STATUS = getPartialStatusSelector(2, 3);
+
+const HISTORY_ITEMS = "section.mt-13 > ul > li";
+const HISTORY_ITEM_DATE = "p.col-span-1 > time";
+const HISTORY_ITEM_TITLE = "h3";
+const HISTORY_ITEM_CAT = "p.font-light";
+const HISTORY_ITEM_DESC = "div.p-0";
 
 async function getStatus() {
   const browser = await puppeteer.launch();
@@ -18,30 +42,60 @@ async function getStatus() {
 
   const promises = [];
   promises.push(page.waitForNavigation());
-  await page.goto('https://cst-ssc.apps.cic.gc.ca/en/login');
+  await page.goto(CST_URL);
   await Promise.all(promises);
 
-  const usernameField = await waitForSelector(["#uci-input"], page);
+  const usernameField = await page.waitForSelector(USERNAME_FIELD);
   await usernameField.click();
   await usernameField.type(process.env.UCI);
 
-  const passwordField = await waitForSelector(["#password-input"], page);
+  const passwordField = await page.waitForSelector(PASSWORD_FIELD);
   await passwordField.click();
   await passwordField.type(process.env.PWD);
 
-  const submitButton = await waitForSelector(["#sign-in-submit-btn"], page);
+  const submitButton = await page.waitForSelector(SUBMIT_BUTTON);
   await submitButton.click();
 
   let result = {};
 
-  result.lastUpdated = await getElementText(["dl > dd > time"], page);
-  result.status = await getElementText(["div.mt-5 > p > strong"], page);
-  result.language = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(1) > details > summary > div:nth-of-type(1)"], page);
-  result.presence = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(2) > details > summary > div:nth-of-type(1)"], page);
-  result.test = await getElementText(["ul.pl-0:nth-of-type(1) > li:nth-child(3) > details > summary > div:nth-of-type(1)"], page);
-  result.background = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(1) > details > summary > div:nth-of-type(1)"], page);
-  result.prohibitions = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(2) > details > summary > div:nth-of-type(1)"], page);
-  result.oath = await getElementText(["ul.pl-0:nth-of-type(2) > li:nth-child(3) > details > summary > div:nth-of-type(1)"], page);
+  const lastUpdatedString = await getSelectorTime(LAST_UPDATED, page);
+  result.lastUpdated = new Date(lastUpdatedString);
+
+  result.status = await getSelectorText(APP_STATUS, page);
+  result.language = await getSelectorText(LANG_STATUS, page);
+  result.presence = await getSelectorText(PRESENCE_STATUS, page);
+  result.test = await getSelectorText(TEST_STATUS, page);
+  result.background = await getSelectorText(BG_STATUS, page);
+  result.prohibitions = await getSelectorText(PROHIBIT_STATUS, page);
+  result.oath = await getSelectorText(OATH_STATUS, page);
+
+  result.history = [];
+
+  // TODO: Press "see more" button to fetch more than 5 items
+  const historyEls = await page.$$(HISTORY_ITEMS);
+
+  for (const historyEl of historyEls) {
+    const dateElement = await historyEl.$(HISTORY_ITEM_DATE);
+    const dateText = await getElementTime(dateElement, page);
+    if (!dateText) continue;
+
+    const titleElement = await historyEl.$(HISTORY_ITEM_TITLE);
+    const titleText = await getElementText(titleElement, page);
+    if (!titleText) continue;
+
+    const categoryElement = await historyEl.$(HISTORY_ITEM_CAT);
+    const categoryText = await getElementText(categoryElement, page);
+
+    const descriptionElement = await historyEl.$(HISTORY_ITEM_DESC);
+    const descriptionText = await getElementText(descriptionElement, page);
+
+    result.history.push({
+      date: new Date(dateText),
+      title: titleText,
+      category: categoryText,
+      description: descriptionText
+    });
+  }
 
   await page.close();
   await browser.close();
@@ -92,9 +146,16 @@ function formatStatusMessage(status) {
 
   const nextStage = getNextStage(status);
 
-  let msg = `Last updated: ${status.lastUpdated}\n`;
+  let msg = `Last updated: ${formatDate(status.lastUpdated)}\n`;
   msg += `Next step: ${nextStage.name}\n`;
   msg += `Status: ${nextStage.status}`;
+
+  const now = new Date();
+  for (const historyItem of status.history) {
+    if (now - historyItem.date < 24 * 60 * 60 * 1000) {
+      msg += `\n\n[Update from ${formatDate(historyItem.date)}]\n${historyItem.description}`;
+    }
+  }
 
   return msg;
 }
@@ -102,7 +163,6 @@ function formatStatusMessage(status) {
 async function doUpdate() {
   try {
     const status = await getStatus();
-    console.log(status);
     const msg = formatStatusMessage(status);
     await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);
   }
