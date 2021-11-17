@@ -28,7 +28,7 @@ async function doStatusUpdate() {
 async function doSheetsUpdate() {
   if (!process.env.SHEETS_API_KEY) return;
   try {
-    const diff = getEntriesDiff(process.env.SHEETS_API_KEY);
+    const diff = await getEntriesDiff(process.env.SHEETS_API_KEY);
     if (diff && diff.length > 0) {
       const msg = formatDiffMessage(diff);
       await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);

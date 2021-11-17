@@ -1,9 +1,5 @@
 function formatDate(date) {
     if (!date) return null;
-
-    if (typeof date == 'string') {
-        date = new Date(date);
-    }
     return date.toLocaleString('en-gb', {
         day: 'numeric',
         year: 'numeric',
@@ -13,10 +9,6 @@ function formatDate(date) {
 
 function formatUtcDate(date) {
     if (!date) return null;
-
-    if (typeof date == 'string') {
-        date = new Date(date);
-    }
     return date.toLocaleString('en-gb', {
         day: 'numeric',
         year: 'numeric',
@@ -25,10 +17,26 @@ function formatUtcDate(date) {
     });
 }
 
+function dateEquals(a, b) {
+    if (!a && !b) {
+        return true;
+    }
+    else if (!a || !b) {
+        return false;
+    }
+    else {
+        return a.getTime() == b.getTime();
+    }
+}
 
 function time() {
     const now = new Date();
-    return `[${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}]`;
+
+    const hrs = `${now.getHours()}`.padStart(2, '0');
+    const mins = `${now.getMinutes()}`.padStart(2, '0');
+    const secs = `${now.getSeconds()}`.padStart(2, '0');
+
+    return `[${hrs}:${mins}:${secs}]`;
 }
 
 function log(msg) {
@@ -42,6 +50,7 @@ function error(msg) {
 module.exports = {
     formatDate,
     formatUtcDate,
+    dateEquals,
     log,
     error
 };

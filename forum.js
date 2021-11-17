@@ -1,6 +1,6 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const fs = require('fs/promises');
-const { formatUtcDate, log, error } = require('./utils');
+const { formatUtcDate, dateEquals, log, error } = require('./utils');
 
 const sheetId = '1U27V95kWlCVYWB0zye7DvqoXSkyqxgbA31eEJ_TKO6Y';
 const desiredLocations = ['vancouver'];
@@ -148,6 +148,15 @@ async function importEntries() {
         const jsonString = await fs.readFile(cachedEntriesFileName);
         const items = JSON.parse(jsonString);
 
+        for (const item of items) {
+            if (item.startDate) {
+                item.startDate = new Date(item.startDate);
+            }
+            if (item.statusDate) {
+                item.statusDate = new Date(item.statusDate);
+            }
+        }
+
         cachedEntries = items;
         return true;
     }
@@ -192,14 +201,14 @@ async function getEntriesDiff(apiKey) {
 
     for (const newItem of updatedEntries) {
         const oldItem = getByName(cachedEntries, newItem.name);
-        if (!oldItem || newItem.status != oldItem.status || newItem.statusDate != oldItem.statusDate) {
+        if (!oldItem || newItem.status != oldItem.status || !dateEquals(newItem.statusDate, oldItem.statusDate)) {
             diff.push({
                 name: newItem.name,
-                startDate: newItem.startDate,
-                oldStatus: oldItem.status,
-                oldStatusDate: oldItem.statusDate,
-                newStatus: newItem.status,
-                newStatusDate: newItem.statusDate
+                startDate: newItem.startDate || 'N/A',
+                oldStatus: oldItem && oldItem.status || 'N/A',
+                oldStatusDate: oldItem && oldItem.statusDate || 'N/A',
+                newStatus: newItem.status || 'N/A',
+                newStatusDate: newItem.statusDate || 'N/A'
             });
         }
     }
