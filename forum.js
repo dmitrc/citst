@@ -195,8 +195,6 @@ async function getEntriesDiff(apiKey) {
     }
 
     const updatedEntries = await getEntries(apiKey);
-    
-    log(`running forum entries diff`);
     const diff = [];
 
     for (const newItem of updatedEntries) {
@@ -214,6 +212,8 @@ async function getEntriesDiff(apiKey) {
     }
 
     await exportEntries(updatedEntries);
+
+    log(`finished forum entries diff (${diff.length})`);
     return diff;
 }
 

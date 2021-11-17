@@ -62,12 +62,12 @@ function scheduleUpdate() {
   }, timeToNearestHour * 60 * 1000);
 }
 
-async function doLatest(ctx) {
+async function doLatest() {
   try {
     log(`getting latest items`);
     const items = await importOrGetEntries(process.env.SHEETS_API_KEY);
     const msg = formatLatestMessage(items, 10);
-    ctx.replyWithMarkdown(msg);
+    await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);
   }
   catch (err) {
     error(err);
@@ -94,9 +94,9 @@ bot.start(ctx => {
   ctx.replyWithMarkdown(`👋 Hey there, ${name} (${id})!`);
 });
 
-bot.command('get', doStatusUpdate);
-bot.command('diff', doSheetsUpdate);
-bot.command('latest', doLatest);
+bot.command('get', () => { doStatusUpdate() });
+bot.command('diff', () => { doSheetsUpdate() });
+bot.command('latest', () => { doLatest() });
 
 async function init() {
   await bot.launch();
