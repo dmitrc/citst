@@ -2,7 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 const { getStatus, formatStatusMessage } = require('./status');
-const { importOrGetEntries, getEntriesDiff, formatDiffMessage, formatLatestMessage } = require('./forum');
+const { importOrGetEntries, getEntriesDiff, formatDiffMessage, formatLatestMessage, formatHistoryMessage } = require('./forum');
 const { log, error } = require('./utils');
 
 const { Telegraf } = require('telegraf');
@@ -62,11 +62,23 @@ function scheduleUpdate() {
   }, timeToNearestHour * 60 * 1000);
 }
 
-async function doLatest() {
+async function doLatest(n) {
   try {
     log(`getting latest items`);
     const items = await importOrGetEntries(process.env.SHEETS_API_KEY);
-    const msg = formatLatestMessage(items, 10);
+    const msg = formatLatestMessage(items, n || 10);
+    await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);
+  }
+  catch (err) {
+    error(err);
+  }
+}
+
+async function doHistory(id) {
+  try {
+    log(`getting history for ${id}`);
+    const items = await importOrGetEntries(process.env.SHEETS_API_KEY);
+    const msg = formatHistoryMessage(items, id);
     await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);
   }
   catch (err) {
@@ -94,9 +106,22 @@ bot.start(ctx => {
   ctx.replyWithMarkdown(`👋 Hey there, ${name} (${id})!`);
 });
 
-bot.command('get', () => { doStatusUpdate() });
-bot.command('diff', () => { doSheetsUpdate() });
-bot.command('latest', () => { doLatest() });
+bot.command('get', () => {
+  doStatusUpdate();
+});
+
+bot.command('diff', () => {
+  doSheetsUpdate();
+});
+
+bot.command('latest', () => {
+  doLatest();
+});
+
+bot.command('hist', (ctx) => { 
+  const param = ctx.message.text.replace("/hist", "").trim();
+  doHistory(param);
+});
 
 async function init() {
   await bot.launch();

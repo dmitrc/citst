@@ -57,7 +57,8 @@ function rowToItem(row) {
         name: row.id,
         startDate: row.received,
         status: "Unknown",
-        statusDate: null
+        statusDate: null,
+        raw: row
     };
 
     if (row.oath) {
@@ -155,6 +156,33 @@ async function importEntries() {
             if (item.statusDate) {
                 item.statusDate = new Date(item.statusDate);
             }
+            if (item.raw && item.raw.sent) {
+                item.raw.sent = new Date(item.raw.sent);
+            }
+            if (item.raw && item.raw.received) {
+                item.raw.received = new Date(item.raw.received);
+            }
+            if (item.raw && item.raw.aor) {
+                item.raw.aor = new Date(item.raw.aor);
+            }
+            if (item.raw && item.raw.inProcess) {
+                item.raw.inProcess = new Date(item.raw.inProcess);
+            }
+            if (item.raw && item.raw.testInvite) {
+                item.raw.testInvite = new Date(item.raw.testInvite);
+            }
+            if (item.raw && item.raw.test) {
+                item.raw.test = new Date(item.raw.test);
+            }
+            if (item.raw && item.raw.dm) {
+                item.raw.dm = new Date(item.raw.dm);
+            }
+            if (item.raw && item.raw.oathInvite) {
+                item.raw.oathInvite = new Date(item.raw.oathInvite);
+            }
+            if (item.raw && item.raw.oath) {
+                item.raw.oath = new Date(item.raw.oath);
+            }
         }
 
         cachedEntries = items;
@@ -246,9 +274,32 @@ function formatLatestMessage(items, limit = 99) {
     return msg;
 }
 
+function formatHistoryMessage(items, name) {
+    if (!items) return null;
+
+    const item = getByName(items, name);
+    if (!item) return "Not found";
+    if (!item.raw) return "No history";
+
+    let msg = `${item.name} (${item.raw.location} / ${item.raw.type})`;
+    msg += `\n\nSent: ${formatUtcDate(item.raw.sent) || "N/A"}`;
+    msg += `\nReceived: ${formatUtcDate(item.raw.received) || "N/A"}`;
+    msg += `\nAOR: ${formatUtcDate(item.raw.aor) || "N/A"}`;
+    msg += `\nIn Process: ${formatUtcDate(item.raw.inProcess) || "N/A"}`;
+    msg += `\nTest Invite: ${formatUtcDate(item.raw.testInvite) || "N/A"}`;
+    msg += `\nTest: ${formatUtcDate(item.raw.test) || "N/A"}`;
+    msg += `\nDM: ${formatUtcDate(item.raw.dm) || "N/A"}`;
+    msg += `\nOath Invite: ${formatUtcDate(item.raw.oathInvite) || "N/A"}`;
+    msg += `\nOath: ${formatUtcDate(item.raw.oath) || "N/A"}`;
+    msg += `\n\nNotes: ${item.raw.notes || "N/A"}`;
+
+    return msg;
+}
+
 module.exports = {
     importOrGetEntries,
     getEntriesDiff,
     formatDiffMessage,
-    formatLatestMessage
+    formatLatestMessage,
+    formatHistoryMessage
 };
