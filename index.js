@@ -25,13 +25,16 @@ async function doStatusUpdate() {
   }
 }
 
-async function doSheetsUpdate() {
+async function doSheetsUpdate(respondOnEmpty) {
   if (!process.env.SHEETS_API_KEY) return;
   try {
     const diff = await getEntriesDiff(process.env.SHEETS_API_KEY);
     if (diff && diff.length > 0) {
       const msg = formatDiffMessage(diff);
       await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);
+    }
+    else if (respondOnEmpty) {
+      await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, "No forum updates");
     }
   }
   catch (err) {
@@ -111,7 +114,7 @@ bot.command('get', () => {
 });
 
 bot.command('diff', () => {
-  doSheetsUpdate();
+  doSheetsUpdate(true);
 });
 
 bot.command('latest', () => {
