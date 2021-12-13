@@ -93,6 +93,8 @@ async function getStatus(username, password) {
   await page.close();
   await browser.close();
 
+  log(`finished citizenship status update (${formatDate(result.lastUpdated)})`);
+
   return result;
 }
 

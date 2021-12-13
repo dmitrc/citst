@@ -3,7 +3,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 
 const { getStatus, formatStatusMessage } = require('./status');
 const { importOrGetEntries, getEntriesDiff, formatDiffMessage, formatLatestMessage, formatHistoryMessage } = require('./forum');
-const { log, error } = require('./utils');
+const { log, error, formatDate } = require('./utils');
 
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
@@ -11,11 +11,17 @@ const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 const statusUpdateHours = [8, 14, 20];
 const sheetsUpdateHours = [7, 9, 11, 13, 15, 17, 19, 21, 23];
 
-async function doStatusUpdate() {
+let lastStatusUpdate = null;
+
+async function doStatusUpdate(respondOnSame) {
   if (!process.env.UCI || !process.env.PWD) return;
   try {
     const status = await getStatus(process.env.UCI, process.env.PWD);
-    if (status) {
+    if (!status) return;
+
+    const lastUpdated = formatDate(status.lastUpdated);
+    if (respondOnSame || lastStatusUpdate != lastUpdated) {
+      lastStatusUpdate = lastUpdated;
       const msg = formatStatusMessage(status);
       await bot.telegram.sendMessage(process.env.TELEGRAM_USERID, msg);
     }
@@ -110,7 +116,7 @@ bot.start(ctx => {
 });
 
 bot.command('get', () => {
-  doStatusUpdate();
+  doStatusUpdate(true);
 });
 
 bot.command('diff', () => {
